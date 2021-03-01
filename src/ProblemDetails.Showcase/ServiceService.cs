@@ -29,6 +29,5 @@ namespace ProblemDetailsShowcase
 
             throw new CustomValidationException(nameof(service.Name), $"Service with name {service.Name} already exists");
         }
-
     }
 }

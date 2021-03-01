@@ -1,11 +1,14 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using ProblemDetailsShowcase.Exceptions;
+using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -15,8 +18,11 @@ namespace ProblemDetailsShowcase
     {
         private static ProblemDetailsFactory _problemDetailsFactory;
         private static HttpContext _context;
-        public static void UseCustomeExceptionHandler(this IApplicationBuilder app)
+        private static bool _includeStackTrace;
+
+        public static void UseCustomeExceptionHandler(this IApplicationBuilder app, IWebHostEnvironment env)
         {
+            _includeStackTrace = env.IsDevelopment();
             app.Use(async (context, next) => await WriteResponse(context));
         }
 
@@ -35,7 +41,7 @@ namespace ProblemDetailsShowcase
                 {
                     CustomExceptionBase customException => HandleProblemDetails(customException),
                     ValidationExceptionBase validationException => HandleValidationProblemDetails(validationException),
-                    _ => throw new System.NotImplementedException(),
+                    _ => HandleDefault(ex),
                 };
 
                 var stream = _context.Response.Body;
@@ -48,13 +54,23 @@ namespace ProblemDetailsShowcase
             }
         }
 
+        private static ProblemDetails HandleDefault(Exception ex)
+        {
+            var problemDetails = _problemDetailsFactory.CreateProblemDetails(
+                _context,
+                detail: _includeStackTrace ? ex.ToString() : ex.Message
+                );
+
+            return problemDetails;
+        }
+
         private static ProblemDetails HandleProblemDetails(CustomExceptionBase ex)
         {
             _context.Response.StatusCode = (int)ex.StatusCode;
             var problemDetails = _problemDetailsFactory.CreateProblemDetails(
                 _context,
                 statusCode: (int)ex.StatusCode,
-                detail: ex.Message
+                detail: _includeStackTrace ? ex.ToString() : ex.Message
                 );
 
             return problemDetails;
@@ -69,7 +85,7 @@ namespace ProblemDetailsShowcase
             var problemDetails = _problemDetailsFactory.CreateValidationProblemDetails(
                 _context,
                 statusCode: (int)ex.StatusCode,
-                detail: ex.Message,
+                detail: _includeStackTrace ? ex.ToString() : ex.Message,
                 modelStateDictionary: modelStateDictionary
                 );
 

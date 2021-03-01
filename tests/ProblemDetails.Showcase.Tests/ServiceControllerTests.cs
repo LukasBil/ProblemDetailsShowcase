@@ -43,7 +43,7 @@ namespace ProblemDetails.Showcase.Tests
             
             Assert.AreEqual(HttpStatusCode.Conflict, response.StatusCode);
             Assert.IsTrue(responseContent.Errors.ContainsKey(nameof(service.Name)));
-            Assert.AreEqual("Service with name TestName already exists", responseContent.Errors[nameof(service.Name)]);
+            Assert.AreEqual("Service with name TestName already exists", responseContent.Errors[nameof(service.Name)][0]);
             Assert.AreEqual("application/problem+json", response.Content.Headers.ContentType.ToString());
         }
     }
