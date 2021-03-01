@@ -32,9 +32,10 @@ namespace ProblemDetailsShowcase
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseExceptionHandler(x => x.UseCustomeExceptionHandler(env));
+
             if (env.IsDevelopment())
             {
-                app.UseExceptionHandler(x => x.UseCustomeExceptionHandler());
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "ProblemDetailsShowcase v1"));
             }
@@ -43,7 +44,6 @@ namespace ProblemDetailsShowcase
                 app.UseExceptionHandler("/error");
             }
 
-            //app.UseMiddleware<ProblemDetailsMiddleware>();
             app.UseHttpsRedirection();
 
             app.UseRouting();
